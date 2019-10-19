@@ -1,0 +1,5 @@
+djitellopy
+cv2
+pygame
+numpy
+time

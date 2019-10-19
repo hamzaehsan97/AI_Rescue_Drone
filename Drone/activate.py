@@ -93,8 +93,8 @@ class FrontEnd(object):
             # face_cascade = cv2.CascadeClassifier('cascades/data/haarcascade_frontalface_alt2.xml')
             # recognizer = cv2.face.EigenFaceRecognizer_create()
             # res = cv2.bitwise_and(frame,frame, mask=mask) USELESS FOR NOW
-            # cv2.imshow("face", frame)
-            # cv2.imshow("RED",mask)
+            #cv2.imshow("face", frame)
+            cv2.imshow("RED",mask)
             frame = pygame.surfarray.make_surface(frame)
             self.screen.blit(frame, (0, 0))
             pygame.display.update()
