@@ -1,5 +1,4 @@
 djitellopy
-opencv
 pygame
 numpy
 time
