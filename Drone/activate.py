@@ -6,7 +6,7 @@ import numpy as np
 import time
 import math
 
-S = 20
+S = 35
 FPS = 30
 face = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 eye = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_lowerbody.xml')
@@ -27,12 +27,12 @@ class FrontEnd(object):
        
         self.tello = Tello()
 
-        
+        self.auto = False
         self.for_back_velocity = 0
         self.left_right_velocity = 0
         self.up_down_velocity = 0
         self.yaw_velocity = 0
-        self.speed = 9
+        self.speed = 10
 
         self.send_rc_control = False
 
@@ -88,6 +88,7 @@ class FrontEnd(object):
             forward = 0
             rotate = 0
             for (x,y,w,h) in faces:
+                # print(w)
                 rectangle = cv2.rectangle(frame, (x,y), (x+w, y+h), (255,0,0), 2)
                 cv2.circle(frame, (480, 360), 5, (0,0,255), thickness=2)
                 xVal=int(x+(w/2))
@@ -105,15 +106,7 @@ class FrontEnd(object):
                 # height= self.tello.get_height()
                 # height = int(''.join([i for i in height if i.isdigit()]))
                 
-                # if("No face is detected"):
-                # if(height<150):
-                #     self.up_down_velocity = int(S/10)
-                #     print("Going up")
-                # elif(height>250):
-                #     self.up_down_velocity = int(S/10)
-                #     print("Going down")
-                # else:
-                #     self.up_down_velocity = 0
+                
                 #     #Go forward forward for one second, rotate for 0.5 seconds if no face found
                 #     if(forward = 0):
                 #         self.for_back_velocity = int(S/10)
@@ -127,38 +120,41 @@ class FrontEnd(object):
                 #                 rotate = 0
                 #                 forward = 0
                 # el
-                if(abs(xDistance) > 50 and abs(yDistance) > 50 and xVal,yVal != 0 and x,y != 0 and w,h == True):
-                    print("Face detected, centering in")
-                    # If subject is to the left or right
-                    if(xDistance < noice):
-                        self.yaw_velocity = int(-1.5*S)
-                        print("turn left")
-                    elif(xDistance > noice):
-                        self.yaw_velocity = int(1.5*S)
-                        print("turn right")
-                    else:
-                        self.yaw_velocity = 0
-                        print("dont turn")
-                    # If subject is above or below the frame    
-                    if(yDistance < -noice-100):
-                        self.up_down_velocity = int(S/5)
-                        print("Go up")
-                    elif(yDistance > noice+100):
-                        self.up_down_velocity = int(-S/5)
-                        print("Go down")
-                    else:
-                        self.up_down_velocity = 0
-                        print("Y constant")
+                if(self.auto == True):
+                    
+                    print("In the auto loop")
+                    if(abs(xDistance) > 50 and abs(yDistance) > 50 and xVal,yVal != 0 and x,y != 0 and w,h == True):
+                        print("Face detected, centering in")
+                        # If subject is to the left or right
+                        if(xDistance < noice):
+                            self.yaw_velocity = int(-1.5*S)
+                            print("turn left")
+                        elif(xDistance > noice):
+                            self.yaw_velocity = int(1.5*S)
+                            print("turn right")
+                        else:
+                            self.yaw_velocity = 0
+                            print("dont turn")
                         # If subject is above or below the frame    
-                    if(w < 300):
-                        self.for_back_velocity = S
-                        print("Go forward")
-                    elif(w > 400):
-                        self.for_back_velocity = -S
-                        print("Go back")
-                    else:
-                        self.for_back_velocity = 0
-                        print("z constant")
+                        if(yDistance < -noice-100):
+                            self.up_down_velocity = int(S)
+                            print("Go up")
+                        elif(yDistance > noice+100):
+                            self.up_down_velocity = int(-S)
+                            print("Go down")
+                        else:
+                            self.up_down_velocity = 0
+                            print("Y constant")
+                            # If subject is above or below the frame    
+                        if(w < 100):
+                            self.for_back_velocity = S
+                            print("Go forward")
+                        elif(w > 200):
+                            self.for_back_velocity = -S
+                            print("Go back")
+                        else:
+                            self.for_back_velocity = 0
+                            print("z constant")
                     # if(height < 150):
                     #     self.up_down_velocity = int(S/10)
                     #     print("Go forward")
@@ -172,22 +168,8 @@ class FrontEnd(object):
                 for(ex,ey,ew,eh) in eyes:
                     cv2.rectangle(roi_color, (ex,ey), (ex+ew, ey+eh), (255,0,0), 2)
             cv2.circle(frame, (480, 360), 5, (0,0,255), thickness=2)
-            # frame1 = np.rot90(frame1)
-            # frame1 = np.rot90(frame1)
-            # frame1 = np.flipud(frame1)
             frame = np.rot90(frame)
             frame = np.flipud(frame)
-            # a = np.array([0,70,50])
-            # b = np.array([10,255,255])
-            # mask = cv2.inRange(frame1,a,b)
-            # faces, confidences = cv2.detect_face(frame)
-            # (startX,startY) = face[0],face[1]
-            # (endX,endY) = face[2],face[3]
-            # face_cascade = cv2.CascadeClassifier('cascades/data/haarcascade_frontalface_alt2.xml')
-            # recognizer = cv2.face.EigenFaceRecognizer_create()
-            # res = cv2.bitwise_and(frame,frame, mask=mask) USELESS FOR NOW
-            #cv2.imshow("face", frame)
-            # cv2.imshow("RED",mask)
             frame = pygame.surfarray.make_surface(frame)
             self.screen.blit(frame, (0, 0))
             pygame.display.update()
@@ -215,6 +197,10 @@ class FrontEnd(object):
             self.yaw_velocity = -S
         elif key == pygame.K_d:  # anti-clockwise
             self.yaw_velocity = S
+        elif key == pygame.K_p:  # anti-clockwise
+            self.auto = True
+        elif key == pygame.K_m:  # anti-clockwise
+            self.auto = False
 
     def keyup(self, key):
         
