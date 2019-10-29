@@ -17,7 +17,6 @@ To download required libraries, navigate to the project directory in terminal an
 
 ```
 pip install -r requirements.txt
-
 ```
 
 
@@ -29,7 +28,7 @@ pip install -r requirements.txt
 
 The following commands can be used to control the drone:
 
-`
+```
 t = Takeoff
 Up Key = Forward
 Down Key = Backwards
@@ -40,13 +39,13 @@ d  = Yaw Right
 s = Descend
 a = Ascend
 
-`
+```
 When running activate.py use the following commands to switch between manual and autonomous flight after takeoff.
 
-`
+```
 p = Automous Flight
 m = Manual Flight
-`
+```
 
 
 ## Built With
