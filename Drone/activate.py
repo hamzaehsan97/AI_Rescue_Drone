@@ -5,14 +5,22 @@ from pygame.locals import *
 import numpy as np
 import time
 import math
+import datetime
+import json
+import requests
 
 S = 35
 FPS = 30
 face = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-eye = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_lowerbody.xml')
-noice = 30
+body = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_fullbody.xml' )
+
+noice = 70
+noFaceTimer = 0
+flyOrNahBool = True
 
 
+
+# Tasks list. 
 class FrontEnd(object):
    
 
@@ -33,6 +41,9 @@ class FrontEnd(object):
         self.up_down_velocity = 0
         self.yaw_velocity = 0
         self.speed = 10
+        self.battery = 0
+        
+        
 
         self.send_rc_control = False
 
@@ -80,104 +91,192 @@ class FrontEnd(object):
                 frame_read.stop()
                 break
 
+            # if flyOrNahBool == True:
+            #     url='http://192.168.64.2/test/fly.php'
+            #     header = {
+            #     'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_2) AppleWebKit/601.3.9 (KHTML, like Gecko) Version/9.0.2 Safari/601.3.9'
+            #     }
+            #     status = requests.post(url, headers=header)
+            #     flyBool = status.text
+            #     if flyBool == "true":
+            #         self.tello.takeoff()
+            #         self.send_rc_control = True
+            #         flyOrNahBool = False
+            #         return("Takeoff initiated")
+            #     else:
+            #         return("Waiting for takeoff")
+
             self.screen.fill([0, 0, 0])
             frame = cv2.cvtColor(frame_read.frame, cv2.COLOR_BGR2RGB)
-            # frame1 = cv2.cvtColor(frame_read.frame, cv2.COLOR_BGR2HSV)
+            hsv = cv2.cvtColor(frame_read.frame, cv2.COLOR_BGR2HSV)
+            lower_red = np.array([0,70,50])
+            upper_red = np.array([10,255,255])
+            mask = cv2.inRange(hsv, lower_red, upper_red)
+            # red = cv2.bitwise_and(frame,frame, mask= mask)
+            redcnts = cv2.findContours(mask.copy(),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)[-2]
+
+            
+                
+
+            #greyscale the frame
             grey = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            #detect faces from grey frame
             faces = face.detectMultiScale(grey, 1.3, 5)
+            #detect upperbpdy from frame
+            bodies = body.detectMultiScale(grey, scaleFactor=1.15, minNeighbors = 5, flags = cv2.CASCADE_SCALE_IMAGE )
+            
+
             forward = 0
             rotate = 0
+            
+            #If faces are not available wait 4 seconds before staying still
+            if self.auto == True:
+                if len(faces)  == 0:
+                    noFaceTimer = noFaceTimer+1
+                    if noFaceTimer >= 120:
+                        self.yaw_velocity = 0
+                        self.for_back_velocity = 0
+                        self.left_right_velocity = 0
+                        self.up_down_velocity = 0
+                    
+                
+            #If faces exist then overlay rectangles on the frame 
             for (x,y,w,h) in faces:
-                # print(w)
-                rectangle = cv2.rectangle(frame, (x,y), (x+w, y+h), (255,0,0), 2)
-                cv2.circle(frame, (480, 360), 5, (0,0,255), thickness=2)
+                noFaceTimer = 0
+                rectangle = cv2.rectangle(frame, (x,y), (x+w, y+h), (0,255,0), 2)
+                cv2.circle(frame, (480, 360), 5, (0,255,0), thickness=2)
                 xVal=int(x+(w/2))
                 yVal=int(y+(h/2))
                 circ = cv2.circle(frame,(xVal,yVal), 5, (255,0,0), 2)
                 roi_grey = grey[y:y+h, x:x+w]
                 roi_color = frame[y:y+h, x:x+w]
-                eyes = eye.detectMultiScale(roi_grey)
-                print("width "+ str(w)+" height "+str(h))
                 xDistance = xVal - 480
                 yDistance = yVal - 360
-                # if(circ != True):
-                #     if(self.tello.get_height)
-                #     self.tello.for_back_velocity = S
-                # height= self.tello.get_height()
-                # height = int(''.join([i for i in height if i.isdigit()]))
-                
-                
-                #     #Go forward forward for one second, rotate for 0.5 seconds if no face found
-                #     if(forward = 0):
-                #         self.for_back_velocity = int(S/10)
-                #         forward=forward+1
-                #         if(forward >= 20):
-                #             self.for_back_velocity = 0
-                #             self.yaw_velocity = int(S/10)
-                #             rotate = rotate+1
-                #             if(rotate >= 10):
-                #                 self.yaw_velocity = 0
-                #                 rotate = 0
-                #                 forward = 0
-                # el
+
+                #If autonomous flight is set to true then fly towards the face in the frame
                 if(self.auto == True):
-                    
                     print("In the auto loop")
                     if(abs(xDistance) > 50 and abs(yDistance) > 50 and xVal,yVal != 0 and x,y != 0 and w,h == True):
                         print("Face detected, centering in")
                         # If subject is to the left or right
                         if(xDistance < noice):
-                            self.yaw_velocity = int(-1.5*S)
+                            self.yaw_velocity = int(-S)
                             print("turn left")
                         elif(xDistance > noice):
-                            self.yaw_velocity = int(1.5*S)
+                            self.yaw_velocity = int(S)
                             print("turn right")
                         else:
                             self.yaw_velocity = 0
                             print("dont turn")
                         # If subject is above or below the frame    
-                        if(yDistance < -noice-100):
+                        if(yDistance < -130):
                             self.up_down_velocity = int(S)
                             print("Go up")
-                        elif(yDistance > noice+100):
+                        elif(yDistance > 130):
                             self.up_down_velocity = int(-S)
                             print("Go down")
                         else:
                             self.up_down_velocity = 0
                             print("Y constant")
                             # If subject is above or below the frame    
-                        if(w < 100):
+                        if(w < 70):
                             self.for_back_velocity = S
                             print("Go forward")
-                        elif(w > 200):
+                        elif(w > 150):
                             self.for_back_velocity = -S
                             print("Go back")
                         else:
                             self.for_back_velocity = 0
                             print("z constant")
-                    # if(height < 150):
-                    #     self.up_down_velocity = int(S/10)
-                    #     print("Go forward")
-                    # elif(height > 200):
-                    #     self.up_down_velocity = int(-S/10)
-                    #     print("Go back")
-                    # else:
-                    #     self.up_down_velocity = 0
-                    #     print("z constant")
-                    
-                for(ex,ey,ew,eh) in eyes:
-                    cv2.rectangle(roi_color, (ex,ey), (ex+ew, ey+eh), (255,0,0), 2)
-            cv2.circle(frame, (480, 360), 5, (0,0,255), thickness=2)
+            #if Bodies exist in the frame then draw rectangles around them
+            for (x,y,w,h) in bodies:
+                bodyRectangle = cv2.rectangle(frame, (x,y), (x+w, y+h), (240,100,100), 1)
+                xVal=int(x+(w/2))
+                yVal=int(y+(h/2))
+                bodyCircle = cv2.circle(frame,(xVal,yVal), 5, (240,100,100), 1)
+
+                #if contour is available for red mask then draw a rectangle
+                if len(redcnts)>0:
+                    redArea = max(redcnts, key=cv2.contourArea)
+                    (xg,yg,wg,hg) = cv2.boundingRect(redArea)
+                    length = math.sqrt((wg*wg)+(hg*hg))
+                    xValue = int(xg+(wg/2))
+                    yValue = int(yg+(hg/2))
+                    xDist = xVal - xValue
+                    yDist = yVal - yValue
+                    distanceToBody = math.sqrt((xDist * xDist)+(yDist * yDist))
+                    if length >= 150 and distanceToBody < 300:
+                        cv2.rectangle(frame,(xg,yg),(xg+wg, yg+hg),(0,100,100),2)
+                        shirtCircle = cv2.circle(frame,(xValue,yValue), 5, (0,100,100), 1)
+                    elif len(faces)  > 0:
+                        print("Found body")
+                        # addToDatabase(datetime.date,self.tello.get_attitude)
+                       
+                        
+
+            
+            #Get drone battery information
+            self.battery = self.tello.get_battery()  
             frame = np.rot90(frame)
             frame = np.flipud(frame)
+            #Add flight information to the frame
+            frame = self.info(frame)
+            #Add frame to the pygame surface
             frame = pygame.surfarray.make_surface(frame)
             self.screen.blit(frame, (0, 0))
+            print(self.tello.get_battery())
+            #Update the screen
             pygame.display.update()
-            # print(self.tello.get_battery())
             
+            #Wait for next frame to come in before repeating the for statement
             time.sleep(1 / FPS)
-        # CALL BEFORE END!!!!!!!!!!!!!!!!!!
+        #End the process before exiting
         self.tello.end()
+
+    #Add position and time to the mysqli database
+    # def addToDatabase(position):
+    #     url='http://192.168.64.2/test/insert.php'
+    #     objectDict = {
+    #         'time': datetime.datetime.now().time(),
+    #         'position': position
+    #     }
+    #     header = {
+    #     'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_2) AppleWebKit/601.3.9 (KHTML, like Gecko) Version/9.0.2 Safari/601.3.9'
+    #     }
+    #     status= requests.post(url,data=objectDict, headers=header)
+    #     print(status.text)
+
+    
+    def info(self,frame):
+
+        class Hud():
+            def __init__(self,selfColor=(255,255,255)):
+                self.selfColor = selfColor
+                self.infos = []
+            def add(self,info, color=None):
+                if color == None: color = self.selfColor
+                self.infos.append((info,color))
+            def draw(self, frame):
+                i=0
+                for (info,color) in self.infos:
+                    cv2.putText(frame,info,(0,30+(i*30)),cv2.FONT_HERSHEY_COMPLEX,10
+                    ,color,thickness=10)
+                    i+=1
+        
+        hud = Hud()
+
+        if self.battery:
+             hud.add(f"BAT {self.battery}")
+        
+        hud.add(f"Battery")
+
+        hud.draw(frame)
+
+        return frame
+
+
+
+
 
     def keydown(self, key):
         
@@ -194,13 +293,18 @@ class FrontEnd(object):
         elif key == pygame.K_s:  # down
             self.up_down_velocity = -S
         elif key == pygame.K_a:  # clockwise
-            self.yaw_velocity = -S
+            self.yaw_velocity = -2*S
         elif key == pygame.K_d:  # anti-clockwise
-            self.yaw_velocity = S
+            self.yaw_velocity = 2*S
         elif key == pygame.K_p:  # anti-clockwise
             self.auto = True
         elif key == pygame.K_m:  # anti-clockwise
+            self.yaw_velocity = 0
+            self.for_back_velocity = 0
+            self.left_right_velocity = 0
+            self.up_down_velocity = 0
             self.auto = False
+
 
     def keyup(self, key):
         
@@ -218,6 +322,12 @@ class FrontEnd(object):
         elif key == pygame.K_l:  
             self.tello.land()
             self.send_rc_control = False
+        elif key == pygame.K_m:
+            self.yaw_velocity = 0
+            self.for_back_velocity = 0
+            self.left_right_velocity = 0
+            self.up_down_velocity = 0
+            self.auto = False
 
     def update(self):
         # Send updates
@@ -225,12 +335,23 @@ class FrontEnd(object):
             self.tello.send_rc_control(self.left_right_velocity, self.for_back_velocity, self.up_down_velocity,
                                        self.yaw_velocity)
 
+    def videofeed(self):
+        frame_read = self.tello.get_frame_read()
+        return frame_read.frame
+
+   
+            
+
+
+
 
 def main():
     frontend = FrontEnd()
-
+    
     # run frontend
     frontend.run()
+    
+
 
 
 if __name__ == '__main__':
