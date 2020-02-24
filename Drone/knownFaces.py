@@ -1,13 +1,14 @@
 import os
 import activate
+from flask import Flask, jsonify, render_template, request, redirect, url_for
+import  zipfile
+import sqlite3
+import datetime
 
 
-class faceEncoding():
+
+class knownFacesLabels():
     def __init__(self,face_image_path):
         self.face_image_path = face_image_path
-        
+        self.label = str(self.face_image_path).split(".", maxsplit=1)[0]
     
-    def getEncoding(self, face_image_path):
-        face_image = face_recognition.load_image_file(self.face_image_path)
-        face_encoding = face_recognition.face_encodings(face_image)[0]
-        return face_encoding

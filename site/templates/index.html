@@ -49,7 +49,7 @@
         <!-- <a href="index.html"><img src="assets/img/logo.png" alt="" class="img-fluid"></a>-->
       </div>
 
-      <nav class="nav-menu d-none d-lg-block">
+      <!-- <nav class="nav-menu d-none d-lg-block">
         <ul>
           <li class="active"><a href="#header">Home</a></li>
           <li class="drop-down"><a href="">Drop Down</a>
@@ -63,7 +63,8 @@
 
           <li class="get-started"><a href="#about">About</a></li>
         </ul>
-      </nav><!-- .nav-menu -->
+      </nav>
+      .nav-menu -->
 
     </div>
   </header><!-- End Header -->
@@ -80,16 +81,17 @@
           <h1> Sick drone Seeker Puns</h1>
           <br>
           <h4>
-            <b>Step1:</b> Add a zipped folder of images to create a facial recognition model.
+            <b>Step1:</b> Add a jpeg/png image file of your face below (HEIC(iphone live photo) format wont be
+            accepted).
             <br>
-            <b>Step2:</b> Once the model is completed, connect to drone through a wifi connection.
+            <b>Step2:</b> Add your first-name to the text box.
           </h4>
 
           <form method="POST" action="/upload_file" enctype=multipart/form-data> <input type="file" name="image"
-            class="btn-get-started" id="image">
+              class="btn-get-started" id="image">
             <br>
             <span class="btn-get-started">
-              <input type="text" class="form-control" name="name" placeholder="Enter a Name">
+              <input type="text" class="form-control" name="name" placeholder="First name">
             </span>
             <br>
             <input type="submit" value="Upload" class="btn-get-started scrollto">

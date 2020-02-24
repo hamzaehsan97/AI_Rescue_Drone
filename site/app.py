@@ -49,9 +49,9 @@ def upload_file():
                 file.save(
                     os.path.join(app.config['UPLOAD_FOLDER'], fileName))
                 print(fileName+" has been uploaded")
-                connection = sqlite3.connect('database.db')
+                connection = sqlite3.connect('/Users/hamzaehsan/Desktop/drone/data.db')
                 cursor = connection.cursor()
-                cursor.execute("INSERT INTO people(name, found, time, fileName) VALUES(?,?,?,?)",(name, "FALSE", time, fileName))
+                cursor.execute("INSERT INTO faces(name, found, time, fileName) VALUES(?,?,?,?)",(name, "FALSE", time, fileName))
                 connection.commit()
                 msg = "Recorded to database"
                 connection.close()
