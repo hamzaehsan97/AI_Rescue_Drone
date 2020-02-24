@@ -1,4 +1,5 @@
 from djitellopy import Tello
+import faceEncodings
 import cv2
 import pygame
 from pygame.locals import *
@@ -8,16 +9,18 @@ import math
 import datetime
 import json
 import requests
+import face_recognition
+import sqlite3
+import pathlib
 
 S = 35
 FPS = 30
 face = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 body = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_fullbody.xml' )
 
-noice = 70
-noFaceTimer = 0
-flyOrNahBool = True
-
+horizontal_distance_face = 70
+face_null_timer = 0
+flight_control_bool = True
 
 
 # Tasks list. 
@@ -72,6 +75,20 @@ class FrontEnd(object):
         frame_read = self.tello.get_frame_read()
 
         should_stop = False
+        
+        #create image encoding array
+        image_encodings_array = []
+
+        #create image name array 
+        known_faces_array = []
+
+        image_directory = pathlib.Path('/Users/hamzaehsan/Desktop/drone/drone/img/upload')
+        for image in image_directory.iterdir():
+            face_encoder = faceEncodings.faceEncoding(image)
+            face_encoded = face_encoder.face_encoding
+            image_encodings_array.append(face_encoded)
+
+
         while not should_stop:
 
             for event in pygame.event.get():
@@ -91,20 +108,8 @@ class FrontEnd(object):
                 frame_read.stop()
                 break
 
-            # if flyOrNahBool == True:
-            #     url='http://192.168.64.2/test/fly.php'
-            #     header = {
-            #     'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_2) AppleWebKit/601.3.9 (KHTML, like Gecko) Version/9.0.2 Safari/601.3.9'
-            #     }
-            #     status = requests.post(url, headers=header)
-            #     flyBool = status.text
-            #     if flyBool == "true":
-            #         self.tello.takeoff()
-            #         self.send_rc_control = True
-            #         flyOrNahBool = False
-            #         return("Takeoff initiated")
-            #     else:
-            #         return("Waiting for takeoff")
+           
+
 
             self.screen.fill([0, 0, 0])
             frame = cv2.cvtColor(frame_read.frame, cv2.COLOR_BGR2RGB)
@@ -121,8 +126,8 @@ class FrontEnd(object):
             #greyscale the frame
             grey = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             #detect faces from grey frame
-            faces = face.detectMultiScale(grey, 1.3, 5)
-            #detect upperbpdy from frame
+            faces = face.detectMultiScale(grey, 1.3, 5) 
+            #detect upperbody from frame
             bodies = body.detectMultiScale(grey, scaleFactor=1.15, minNeighbors = 5, flags = cv2.CASCADE_SCALE_IMAGE )
             
 
@@ -132,8 +137,8 @@ class FrontEnd(object):
             #If faces are not available wait 4 seconds before staying still
             if self.auto == True:
                 if len(faces)  == 0:
-                    noFaceTimer = noFaceTimer+1
-                    if noFaceTimer >= 120:
+                    face_null_timer = face_null_timer+1
+                    if face_null_timer >= 120:
                         self.yaw_velocity = 0
                         self.for_back_velocity = 0
                         self.left_right_velocity = 0
@@ -141,8 +146,9 @@ class FrontEnd(object):
                     
                 
             #If faces exist then overlay rectangles on the frame 
+            
             for (x,y,w,h) in faces:
-                noFaceTimer = 0
+                face_null_timer = 0
                 rectangle = cv2.rectangle(frame, (x,y), (x+w, y+h), (0,255,0), 2)
                 cv2.circle(frame, (480, 360), 5, (0,255,0), thickness=2)
                 xVal=int(x+(w/2))
@@ -159,10 +165,10 @@ class FrontEnd(object):
                     if(abs(xDistance) > 50 and abs(yDistance) > 50 and xVal,yVal != 0 and x,y != 0 and w,h == True):
                         print("Face detected, centering in")
                         # If subject is to the left or right
-                        if(xDistance < noice):
+                        if(xDistance < horizontal_distance_face):
                             self.yaw_velocity = int(-S)
                             print("turn left")
-                        elif(xDistance > noice):
+                        elif(xDistance > horizontal_distance_face):
                             self.yaw_velocity = int(S)
                             print("turn right")
                         else:
@@ -210,7 +216,7 @@ class FrontEnd(object):
                         shirtCircle = cv2.circle(frame,(xValue,yValue), 5, (0,100,100), 1)
                     elif len(faces)  > 0:
                         print("Found body")
-                        # addToDatabase(datetime.date,self.tello.get_attitude)
+                        addToDatabase(datetime.date,self.tello.get_attitude)
                        
                         
 
@@ -233,18 +239,6 @@ class FrontEnd(object):
         #End the process before exiting
         self.tello.end()
 
-    #Add position and time to the mysqli database
-    # def addToDatabase(position):
-    #     url='http://192.168.64.2/test/insert.php'
-    #     objectDict = {
-    #         'time': datetime.datetime.now().time(),
-    #         'position': position
-    #     }
-    #     header = {
-    #     'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_2) AppleWebKit/601.3.9 (KHTML, like Gecko) Version/9.0.2 Safari/601.3.9'
-    #     }
-    #     status= requests.post(url,data=objectDict, headers=header)
-    #     print(status.text)
 
     
     def info(self,frame):
@@ -258,10 +252,10 @@ class FrontEnd(object):
                 self.infos.append((info,color))
             def draw(self, frame):
                 i=0
-                for (info,color) in self.infos:
-                    cv2.putText(frame,info,(0,30+(i*30)),cv2.FONT_HERSHEY_COMPLEX,10
-                    ,color,thickness=10)
-                    i+=1
+                # for (info,color) in self.infos:
+                #     cv2.putText(frame,info,(0,30+(i*30)),cv2.FONT_HERSHEY_COMPLEX,10
+                #     ,color,thickness=10)
+                #     i+=1
         
         hud = Hud()
 

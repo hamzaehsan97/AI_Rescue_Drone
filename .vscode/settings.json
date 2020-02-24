@@ -1,4 +1,4 @@
 {
-    "python.pythonPath": "/Users/hamzaehsan/anaconda3/bin/python",
+    "python.pythonPath": "/Users/hamzaehsan/anaconda3/envs/new/bin/python",
     "python.formatting.provider": "autopep8"
 }
