@@ -50,7 +50,7 @@ m = Manual Flight
 ## Screenshots
 
 * Flask Site
-![alt text](/static/screenshots/site_screenshot.png){:height="50%" width="50%"}
+![alt text](/static/screenshots/site_screenshot.png?v=4&s=200)
 
 
 ## Built With
