@@ -69,5 +69,5 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 * Damià Fuentes Escoté
 * Jabrils - Project Inspiration (https://github.com/Jabrils)
 
-![alt text](https://raw.githubusercontent.com/hamzaehsan97/AI_Rescue_Drone/static/screenshots/site_screenshot.png)
+![alt text](https://github.com/hamzaehsan97/AI_Rescue_Drone/blob/master/static/screenshots/site_screenshot.png)
 
