@@ -133,3 +133,12 @@ dmypy.json
 
 # pytype static type analyzer
 .pytype/
+
+# Mac
+.DS_Store
+
+# VScode
+.vscode/
+
+# Theme
+_config.yml
