@@ -50,7 +50,7 @@ m = Manual Flight
 ## Screenshots
 
 * Flask Site
-![alt text](https://github.com/hamzaehsan97/AI_Rescue_Drone/blob/master/static/screenshots/site_screenshot.png)
+![alt text](/static/screenshots/site_screenshot.png){:height="50%" width="50%"}
 
 
 ## Built With
