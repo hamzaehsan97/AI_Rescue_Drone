@@ -47,6 +47,11 @@ p = Automous Flight
 m = Manual Flight
 ```
 
+## Screenshots
+
+* Flask Site
+![alt text](/static/screenshots/site_screenshot.png?v=4&s=200)
+
 
 ## Built With
 
@@ -68,6 +73,3 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 
 * Damià Fuentes Escoté
 * Jabrils - Project Inspiration (https://github.com/Jabrils)
-
-![alt text](https://raw.githubusercontent.com/hamzaehsan97/AI_Rescue_Drone/static/screenshots/site_screenshot.png)
-
