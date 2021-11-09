@@ -1,5 +1,5 @@
+
 import face_recognition
-import activate
 
 
 class faceEncoding():
