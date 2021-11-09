@@ -1,11 +1,7 @@
 djitellopy
 pygame
 numpy
-time
+CMake
 face_recognition
 opencv-python-headless
 pathlib
-os
-math
-flask
-sqlite3
